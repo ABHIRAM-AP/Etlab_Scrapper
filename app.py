@@ -1,3 +1,21 @@
+from flask import Flask,request,jsonify
+from bs4 import BeautifulSoup
+import requests
+from flask_cors import CORS
+
+
+app = Flask(__name__)
+CORS(app)
+
+login_url = 'https://sctce.etlab.in/user/login'
+attendance_url = 'https://sctce.etlab.in/ktuacademics/student/viewattendancesubject/88'
+
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"
+}
+
+
 @app.route('/get-attendance', methods=['POST'])
 def fetch_attendance():
     data = request.get_json()
