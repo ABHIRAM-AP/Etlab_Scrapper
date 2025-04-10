@@ -16,6 +16,12 @@ headers = {
 }
 
 
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({"message": "Backend is running!"})
+
+
+
 @app.route('/get-attendance', methods=['POST'])
 def fetch_attendance():
     data = request.get_json()
