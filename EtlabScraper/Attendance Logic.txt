@@ -1,0 +1,36 @@
+#include<stdio.h>
+#include<math.h>
+
+
+int main()
+{
+    int option=0;
+    int total_classes=0,attended=0;
+    printf("Enter the total number of classes:");
+    scanf("%d",&total_classes);
+     printf("Enter the total number of attended classes:");
+    scanf("%d",&attended);
+
+    while(option!=4)
+    {
+    printf("Enter option:\n1-90\n2-80\n3-75\n4-Exit:");
+    scanf("%d",&option);
+    switch(option)
+    {
+        case 1:
+        double required_classes = floor((attended - (0.9*total_classes))/0.9);
+        printf("Can skip %0.0lf classes for upto  90%",required_classes);
+        break;
+        
+        case 2:
+        required_classes = floor((attended - (0.8*total_classes))/0.8);
+        printf("Can skip %0.0lf classes for upto  80%",required_classes);
+        break;
+        case 3:
+         required_classes = floor((attended - (0.75*total_classes))/0.75);
+        printf("Can skip %0.0lf classes for upto  75%",required_classes);
+        break;
+    }
+    }
+    return 0;
+}
