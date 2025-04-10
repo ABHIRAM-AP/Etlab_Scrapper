@@ -32,7 +32,7 @@ def fetch_attendance():
     if login.status_code == 200:
         attendance_response = session.get(attendance_url,headers=headers)
         if attendance_response.status_code == 200:
-            soup = BeautifulSoup(attendance_response.text,"html_parser")
+            soup = BeautifulSoup(attendance_response.text,"html.parser")
             table = soup.find("table")
 
             if not table:
