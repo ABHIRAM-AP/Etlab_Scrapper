@@ -1,5 +1,5 @@
 from flask import Flask, request
-from app import fetch_data
+from web import fetch_data
 
 app = Flask(__name__)
 
