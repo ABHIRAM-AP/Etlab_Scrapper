@@ -1,66 +1,139 @@
-from bs4 import BeautifulSoup
 import requests
-import os
-from dotenv import load_dotenv
+from bs4 import BeautifulSoup
+from flask import jsonify
 
-load_dotenv()
-ETLAB_ID = os.getenv('ETLAB_ID')
-PASSWORD = os.getenv('PASSWORD')
-
-login_url = 'https://sctce.etlab.in/user/login'
-attendance_url = 'https://sctce.etlab.in/ktuacademics/student/viewattendancesubject/88'
-
+login_url = "https://sctce.etlab.in/user/login"
+attendance_url = "https://sctce.etlab.in/ktuacademics/student/viewattendancesubject/88"
+result_url = "https://sctce.etlab.in/ktuacademics/student/results"
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"
+    "User-Agent": "Mozilla/5.0"
 }
 
-
-
-
-def fetchAttendance():
-    # data = requests.get_json()
-    # ETLAB_ID = data.get('username')
-    # PASSWORD = data.get('password')
-    
+def fetch_data(userID, password):
+    session = requests.Session()
 
     login_data = {
-    "LoginForm[username]": ETLAB_ID,
-    "LoginForm[password]": PASSWORD,
-}
-    userSession = requests.Session()
-    loginSession = userSession.post(login_url, data=login_data, headers=headers)
+        "LoginForm[username]": userID,
+        "LoginForm[password]": password,
+    }
 
-    if loginSession.status_code == 200:
-        attendance_response = userSession.get(attendance_url, headers=headers)
-        if attendance_response.status_code == 200:
-            attendance_soup = BeautifulSoup(attendance_response.text, "html.parser")
-            attendance_table = attendance_soup.find("table")
-            if attendance_table:
-            
-                header_elements = attendance_table.find_all("th")
-                headers_text = [header.text.strip() for header in header_elements]
-                
-                # print("\nHeaders:")
-                print(headers_text, "\n") 
+    login_response = session.post(login_url, data=login_data, headers=headers)
+    if login_response.status_code != 200:
+        return jsonify({"error": "Login Failed"}), 401
 
-                rows = attendance_table.find_all("tr")[1:]  
-                
-                print("Attendance Data:")
+    # Internal Marks 
+    internal_marks = []
+    result_response = session.get(result_url, headers=headers)
+    if result_response.status_code == 200:
+        result_soup = BeautifulSoup(result_response.text, "html.parser")  
+        h5_headings = result_soup.find_all('h5')
+        for heading in h5_headings:
+            if "Internal marks" in heading.text.strip():
+                widget_box = heading.find_parent('div', class_='widget-box')
+                if widget_box:
+                    marks_table = widget_box.find('table', class_='items')
+                    if marks_table:
+                        rows = marks_table.find_all('tr')[1:]
+                        for row in rows:
+                            columns = [td.text.strip() for td in row.find_all('td')]
+                            if len(columns) >= 4:
+                                subject_code, subject_name = columns[0].split(' - ')
+                                semester = columns[1]
+                                max_marks = columns[2]
+                                marks_obtained = columns[3]
+                                internal_marks.append({
+                                    'subject_code': subject_code,
+                                    'subject_name': subject_name,
+                                    'semester': semester,
+                                    'marks_obtained': marks_obtained,
+                                    'max_marks': max_marks,
+                                })
+
+    # Attendance 
+    attendance_data = {
+        "headers": [],
+        "data": [],
+    }
+
+    attendance_response = session.get(attendance_url, headers=headers)
+    if attendance_response.status_code == 200:
+        attend_soup = BeautifulSoup(attendance_response.text, "html.parser")
+        table = attend_soup.find("table")
+        if table:
+            attendance_data["headers"] = [th.text.strip() for th in table.find_all("th")]
+            for row in table.find_all("tr")[1:]:
+                cols = [td.text.strip() for td in row.find_all("td")]
+                if cols:
+                    attendance_data["data"].append(cols)
+
+    #  Final JSON 
+    return jsonify({
+        "internal_marks": internal_marks,
+        "attendance": attendance_data,
+    })
+
+
+
+
+"""def get_internal_marks(userID, password):
+
+
+results = []
+if login_response.status_code == 200:
+    results_response = session.get(result_url)
+    if results_response.status_code == 200:
+        results_soup = BeautifulSoup(results_response.text, "html.parser")
+        h5_headings = results_soup.find_all('h5')
+        for heading in h5_headings:
+            if "Internal marks" in heading.text.strip():
+                print("Found the Internal Marks section!")
+
+                widget_box = heading.find_parent('div',
+                                                 class_='widget-box')
+                marks_table = widget_box.find('table', class_='items')
+                # print(marks_table)
+                rows = marks_table.find_all('tr')[1:]
                 for row in rows:
-                    columns = row.find_all("td")
-                    data = [col.text.strip() for col in columns]
-                    
-                    if data:  
-                          print(data)
+                    columns = [
+                        td.text.strip() for td in row.find_all('td')
+                    ]
+                    subject_details = columns[0]
+                    subject_code = subject_details.split(' - ')[0]
+                    subject_name = subject_details.split(' - ')[1]
+                    semester = columns[1]
+                    max_marks = columns[2]
+                    marks_obtained = columns[3]
+                    # print(f"Code: {subject_code}")
+                    # print(f"Name: {subject_name}")
+                    # print(f"Marks: {marks_obtained}/{max_marks}")
+                    # print("---")
+                    results.append({
+                        'subject_code': subject_code,
+                        'subject_name': subject_name,
+                        # 'semester': semester,
+                        'marks_obtained': marks_obtained,
+                        'max_marks': max_marks,
+                    })
+                return results
+    else:
+        print("Failed to retrieve results page.")
+else:
+    print("Login failed.")
+return None
+"""
 
-            else:
-                print("Attendance Data Not Found!")
-            return {
-    "data": data
+
+# NOTES
+"""
+session = requests.Session() # create a session object
+*This is for same GET POST request,otherwise site will generate new csrf token everytime
+
+
+payload = {
+'csrf_token': csrf_token, # IF THERE
+'username': 'admin', # Give the value of attribute for both the Left Hand Side
+'password': 'admin'  
 }
 
-
-
-sample = fetchAttendance()
-print(sample)
+"""
