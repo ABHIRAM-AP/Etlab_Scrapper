@@ -35,7 +35,6 @@ def fetch_data(userID, password):
             attendance_data["title"] = [th.text.strip() for th in table.find_all("th")]
             for row in table.find_all("tr")[1:]:
                 cols = [td.text.strip() for td in row.find_all("td")]
-                print(cols)
                 if cols:
                     attendance_data["data"] = cols
 
