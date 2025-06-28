@@ -23,7 +23,7 @@ def fetch_data(userID, password):
 
     # Attendance 
     attendance_data = {
-        "headers": [],
+        "title": [],
         "data": [],
     }
 
@@ -32,11 +32,12 @@ def fetch_data(userID, password):
         attend_soup = BeautifulSoup(attendance_response.text, "html.parser")
         table = attend_soup.find("table")
         if table:
-            attendance_data["headers"] = [th.text.strip() for th in table.find_all("th")]
+            attendance_data["title"] = [th.text.strip() for th in table.find_all("th")]
             for row in table.find_all("tr")[1:]:
                 cols = [td.text.strip() for td in row.find_all("td")]
+                print(cols)
                 if cols:
-                    attendance_data["data"].append(cols)
+                    attendance_data["data"] = cols
 
     #  Final JSON 
     return jsonify({
