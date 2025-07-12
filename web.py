@@ -44,7 +44,7 @@ def fetch_data(userID, password):
     #  Final JSON 
     return jsonify({
         "attendance": attendance_data,
-        "subjects":subject_data,
+        "subjects":subject_data["subjects"],
     })
 
 
