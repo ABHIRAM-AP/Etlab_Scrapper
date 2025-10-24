@@ -31,17 +31,25 @@ def fetch_data(userID, password):
     attendance_response = session.get(attendance_url, headers=headers)
     if attendance_response.status_code == 200:
         attend_soup = BeautifulSoup(attendance_response.text, "html.parser")
+
         table = attend_soup.find("table")
         if table:
             attendance_data["title"] = [th.text.strip() for th in table.find_all("th")]
+            if "Duty Leave" in attendance_data["title"][11] and "Duty Leave Percentage" in attendance_data["title"][14]:
+                del attendance_data["title"][14]
+                del attendance_data["title"][11]
             for row in table.find_all("tr")[1:]:
-                cols = [td.text.strip() for td in row.find_all("td")]
+                cols = [td.text.strip() for td in row.find_all("td")] 
+                del cols[14]
+                del cols[11]
                 if cols:
                     attendance_data["data"] = cols
 
 
     
     #  Final JSON 
+    print(attendance_data["data"])
+
     return jsonify({
         "attendance": attendance_data,
         "subjects":subject_data["subjects"],
@@ -63,6 +71,7 @@ def fetch_subjects(session):
     last_table = tables[-1]
     t_body = last_table.find("tbody")
     rows = t_body.find_all("tr")
+    
 
     subjects_dict = {}
     for row in rows:
@@ -78,5 +87,7 @@ def fetch_subjects(session):
                     subjects_dict[sub_code] =sub_name
                 
 
-    print(subjects_dict)
+    
     return {"subjects": subjects_dict}
+
+
