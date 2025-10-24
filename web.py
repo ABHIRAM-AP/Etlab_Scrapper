@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from flask import jsonify
 
 login_url = "https://sctce.etlab.in/user/login"
-attendance_url = "https://sctce.etlab.in/ktuacademics/student/viewattendancesubject/88"
+attendance_url = "https://sctce.etlab.in/ktuacademics/student/viewattendancesubjectdutyleave/88"
 
 headers = {
     "User-Agent": "Mozilla/5.0"
