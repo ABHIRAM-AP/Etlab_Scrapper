@@ -22,42 +22,55 @@ def fetch_data(userID, password):
     if login_response.status_code != 200:
         return jsonify({"error": "Login Failed"}), 401
 
-    # Attendance 
+    # Attendance Data Holder
     attendance_data = {
         "title": [],
         "data": [],
     }
+
     subject_data = fetch_subjects(session)
     attendance_response = session.get(attendance_url, headers=headers)
+
     if attendance_response.status_code == 200:
         attend_soup = BeautifulSoup(attendance_response.text, "html.parser")
-
         table = attend_soup.find("table")
+
         if table:
-            attendance_data["title"] = [th.text.strip() for th in table.find_all("th")]
-            if "Duty Leave" in attendance_data["title"][11] and "Duty Leave Percentage" in attendance_data["title"][14]:
-                del attendance_data["title"][14]
-                del attendance_data["title"][11]
+            # Get all titles once
+            titles = [th.text.strip() for th in table.find_all("th")]
+
+            remove_columns = {"Duty Leave", "Duty Leave Percentage"}
+
+         
             for row in table.find_all("tr")[1:]:
-                cols = [td.text.strip() for td in row.find_all("td")] 
-                del cols[14]
-                del cols[11]
-                if cols:
-                    attendance_data["data"] = cols
+                cols = [td.text.strip() for td in row.find_all("td")]
+                if not cols:
+                    continue
 
+             
+                filtered = [
+                    (t, d)
+                    for t, d in zip(titles, cols)
+                    if t not in remove_columns
+                ]
 
-    
-    #  Final JSON 
+                if not filtered:
+                    continue
+
+                attendance_data["title"], attendance_data["data"] = map(list, zip(*filtered))
+                break  
+
+    # Final JSON 
     print(attendance_data["data"])
 
     return jsonify({
         "attendance": attendance_data,
-        "subjects":subject_data["subjects"],
+        "subjects": subject_data["subjects"],
     })
 
 
 def fetch_subjects(session):
-    subject_url =  "https://sctce.etlab.in/ktuacademics/student/teacher"
+    subject_url = "https://sctce.etlab.in/ktuacademics/student/teacher"
     response = session.get(subject_url, headers=headers)
 
     if response.status_code != 200:
@@ -72,7 +85,6 @@ def fetch_subjects(session):
     t_body = last_table.find("tbody")
     rows = t_body.find_all("tr")
     
-
     subjects_dict = {}
     for row in rows:
         tds = row.find_all("td")
@@ -84,10 +96,6 @@ def fetch_subjects(session):
                 sub_name = regex_match.group(2).strip().upper()
 
                 if sub_code not in subjects_dict:
-                    subjects_dict[sub_code] =sub_name
-                
+                    subjects_dict[sub_code] = sub_name
 
-    
     return {"subjects": subjects_dict}
-
-
